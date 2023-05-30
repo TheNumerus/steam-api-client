@@ -1,3 +1,5 @@
+use crate::AppId;
+
 const BASE_URL: &str = "https://api.steampowered.com";
 const BASE_IMAGE_URL: &str = "https://cdn.cloudflare.steamstatic.com/steam/apps";
 
@@ -9,7 +11,7 @@ pub enum SteamEndpoint<'a> {
     },
     GetPlayerAchievements {
         id: &'a str,
-        appid: &'a str,
+        appid: AppId,
         lang: Option<&'a str>,
     },
     ResolveVanityUrl {
@@ -19,10 +21,13 @@ pub enum SteamEndpoint<'a> {
         steam_id: &'a str,
     },
     GetGlobalAchievementPercentagesForApp {
-        appid: &'a str,
+        appid: AppId,
     },
     GetSchemaForGame {
-        appid: &'a str,
+        appid: AppId,
+    },
+    GetRecentlyPlayedGames {
+        steam_id: &'a str,
     },
 }
 
@@ -37,6 +42,7 @@ impl<'a> SteamEndpoint<'a> {
                 "/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/"
             }
             Self::GetSchemaForGame { .. } => "/ISteamUserStats/GetSchemaForGame/v0002/",
+            Self::GetRecentlyPlayedGames { .. } => "/IPlayerService/GetRecentlyPlayedGames/v1/"
         };
 
         match self {
@@ -62,25 +68,32 @@ impl<'a> SteamEndpoint<'a> {
                 format!("{}{}?key={}&steamids={}", BASE_URL, resource, key, steam_id)
             }
             Self::GetGlobalAchievementPercentagesForApp { appid } => {
-                format!("{}{}?gameid={}", BASE_URL, resource, appid)
+                format!("{}{}?key={}&gameid={}", BASE_URL, resource, key, appid)
             }
             Self::GetSchemaForGame { appid } => {
                 format!("{}{}?key={}&appid={}", BASE_URL, resource, key, appid)
+            }
+            Self::GetRecentlyPlayedGames {steam_id} => {
+                format!("{}{}?key={}&steamid={}", BASE_URL, resource, key, steam_id)
             }
         }
     }
 }
 
-pub enum SteamImageEndpoint<'a> {
-    SmallCapsule{
-        appid: &'a str
+pub enum SteamImageEndpoint {
+    SmallCapsule {
+        appid: AppId
+    },
+    LibraryCapsule {
+        appid: AppId
     }
 }
 
-impl<'a> SteamImageEndpoint<'a> {
+impl SteamImageEndpoint {
     pub fn url(self) -> String {
         match self {
             SteamImageEndpoint::SmallCapsule { appid } => format!("{}/{}/capsule_231x87.jpg", BASE_IMAGE_URL, appid),
+            SteamImageEndpoint::LibraryCapsule { appid } => format!("{}/{}/library_600x900.jpg", BASE_IMAGE_URL, appid),
         }
     }
 }
